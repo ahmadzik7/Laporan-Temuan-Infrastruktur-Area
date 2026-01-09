@@ -96,7 +96,7 @@ button.secondary{
 
   <div class="form-group">
     <label>Nama Penginput</label>
-    <input type="text" id="nama" required>
+    <input type="text" id="nama" required placeholder="Contoh: Budi Santoso">
   </div>
 
   <div class="form-group">
@@ -147,8 +147,8 @@ button.secondary{
 </div>
 
 <script>
-// ❗ HAPUS SPASI DI AKHIR URL!
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-7TbvIXzMfEQM6lvnRvdm07Bnekj33Tn_4RRHUxe3WWG2_qVIuklckg2DS_nLZ_Km/exec";
+// ❗ Pastikan tidak ada spasi di akhir URL!
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxYy14J3ygW70awAVEpMgSF94b7oUhz1Gwbhllqdptu7XPKqsSKwu-Evrix2rdB1Du4/exec";
 
 let temuanIndex = 0;
 let camTarget = null;
@@ -174,7 +174,7 @@ function addTemuan() {
     </div>
     <div class="form-group">
       <label>Lokasi</label>
-      <input type="text" id="lokasi_${temuanIndex}" placeholder="Contoh: Packing,filling kempu, retail filling dll" required>
+      <input type="text" id="lokasi_${temuanIndex}" placeholder="Contoh: Packing, filling kempu, retail filling dll" required>
     </div>
     <div class="form-group">
       <label>Deskripsi Temuan</label>
@@ -239,6 +239,11 @@ function closeCamera() {
   }
 }
 
+// === FUNGSI BANTU: BERSIHKAN NAMA ===
+function cleanName(str) {
+  return str.replace(/[^a-zA-Z0-9]/g, '');
+}
+
 // === KIRIM BEFORE ===
 async function submitBefore() {
   const nama = document.getElementById("nama").value.trim();
@@ -246,6 +251,12 @@ async function submitBefore() {
 
   if (!nama || !tanggal) {
     alert("Nama dan Tanggal wajib diisi!");
+    return;
+  }
+
+  const cleanNama = cleanName(nama);
+  if (cleanNama.length === 0) {
+    alert("Nama penginput harus mengandung minimal 1 huruf atau angka!");
     return;
   }
 
@@ -268,14 +279,15 @@ async function submitBefore() {
       return;
     }
 
-    if (!fotoBeforeSrc || !fotoBeforeSrc.startsWith('data:image')) {
+    if (!fotoBeforeSrc || !fotoBeforeSrc.startsWith('image')) {
       alert(`Temuan #${i}: Foto before belum diambil.`);
       return;
     }
 
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2,6).toUpperCase();
-    const kodeUnik = "TS" + timestamp + random;
+    // 🔑 GENERATE KODE UNIK: Nama + Angka(0-9) + Huruf(A-Z)
+    const angkaAcak = Math.floor(Math.random() * 10);
+    const hurufAcak = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    const kodeUnik = cleanNama + angkaAcak + hurufAcak;
 
     kodeUnikList.push(kodeUnik);
     temuanList.push({
@@ -298,18 +310,17 @@ async function submitBefore() {
       temuan: temuanList
     };
 
-    // ✅ KIRIM SEBAGAI PLAIN TEXT → HINDARI PREFLIGHT
+    // Kirim tanpa header Content-Type → hindari preflight CORS
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
-      body: JSON.stringify(payload), // tetap kirim JSON, tapi...
-      // ❌ JANGAN SET headers Content-Type → biarkan browser tentukan
-      // Ini akan kirim sebagai text/plain, bukan application/json
+      body: JSON.stringify(payload)
+      // Tidak set headers → browser kirim sebagai text/plain
     });
 
     if (res.ok) {
       let msg = "<strong>✅ Temuan berhasil dikirim!</strong><br>Kode Unik:<br><ul>";
       kodeUnikList.forEach(k => msg += `<li><code>${k}</code></li>`);
-      msg += "</ul>";
+      msg += "</ul><small>Simpan kode ini untuk input foto after.</small>";
 
       document.getElementById('kodeResult').innerHTML = msg;
       document.getElementById('kodeResult').style.display = "block";
@@ -324,7 +335,7 @@ async function submitBefore() {
       alert("❌ Server error: " + text);
     }
   } catch (e) {
-    alert("❌ Gagal mengirim: " + (e.message || "Koneksi bermasalah"));
+    alert("❌ Gagal mengirim: " + (e.message || "Periksa koneksi internet"));
     console.error(e);
   } finally {
     loading.style.display = "none";
@@ -341,7 +352,7 @@ async function submitAfter() {
     return;
   }
 
-  if (!fotoAfter || !fotoAfter.startsWith("data:image")) {
+  if (!fotoAfter || !fotoAfter.startsWith("image")) {
     alert("Ambil foto perbaikan terlebih dahulu!");
     return;
   }
@@ -359,11 +370,10 @@ async function submitAfter() {
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
       body: JSON.stringify(payload)
-      // ❌ TANPA headers → hindari preflight
     });
 
     if (res.ok) {
-      alert("✅ Foto after berhasil dikirim!");
+      alert("✅ Foto after berhasil dikirim dan status otomatis menjadi 'Close'!");
       document.getElementById("kodeUnik").value = "";
       document.getElementById("fotoAfterPreview").style.display = "none";
       document.getElementById("fotoAfterPreview").src = "";
@@ -379,6 +389,7 @@ async function submitAfter() {
   }
 }
 
+// Inisialisasi
 addTemuan();
 </script>
 </body>
