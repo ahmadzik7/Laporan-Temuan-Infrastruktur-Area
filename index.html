@@ -147,6 +147,7 @@ button.secondary{
 </div>
 
 <script>
+// ❗ HAPUS SPASI DI AKHIR URL!
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-7TbvIXzMfEQM6lvnRvdm07Bnekj33Tn_4RRHUxe3WWG2_qVIuklckg2DS_nLZ_Km/exec";
 
 let temuanIndex = 0;
@@ -297,10 +298,12 @@ async function submitBefore() {
       temuan: temuanList
     };
 
+    // ✅ KIRIM SEBAGAI PLAIN TEXT → HINDARI PREFLIGHT
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
+      body: JSON.stringify(payload), // tetap kirim JSON, tapi...
+      // ❌ JANGAN SET headers Content-Type → biarkan browser tentukan
+      // Ini akan kirim sebagai text/plain, bukan application/json
     });
 
     if (res.ok) {
@@ -311,12 +314,9 @@ async function submitBefore() {
       document.getElementById('kodeResult').innerHTML = msg;
       document.getElementById('kodeResult').style.display = "block";
 
-      // Jika hanya 1 temuan, isi otomatis di form after
       if (kodeUnikList.length === 1) {
         document.getElementById('kodeUnik').value = kodeUnikList[0];
       }
-
-      // Pindah ke tab After
       showTab('after');
 
     } else {
@@ -358,13 +358,12 @@ async function submitAfter() {
 
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
+      body: JSON.stringify(payload)
+      // ❌ TANPA headers → hindari preflight
     });
 
     if (res.ok) {
       alert("✅ Foto after berhasil dikirim!");
-      // Kosongkan form after
       document.getElementById("kodeUnik").value = "";
       document.getElementById("fotoAfterPreview").style.display = "none";
       document.getElementById("fotoAfterPreview").src = "";
@@ -380,7 +379,6 @@ async function submitAfter() {
   }
 }
 
-// Inisialisasi
 addTemuan();
 </script>
 </body>
