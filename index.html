@@ -279,12 +279,13 @@ async function submitBefore() {
       return;
     }
 
-    if (!fotoBeforeSrc || !fotoBeforeSrc.startsWith('image')) {
-      alert(`Temuan #${i}: Foto before belum diambil.`);
+    // ✅ PERBAIKAN UTAMA: validasi foto dengan 'data:image/'
+    if (!fotoBeforeSrc || !fotoBeforeSrc.startsWith('data:image/')) {
+      alert(`Temuan #${i}: Foto before belum diambil atau gagal diambil.`);
       return;
     }
 
-    // 🔑 GENERATE KODE UNIK: Nama + Angka(0-9) + Huruf(A-Z)
+    // 🔑 GENERATE KODE UNIK: NamaBersih + Angka(0-9) + Huruf(A-Z)
     const angkaAcak = Math.floor(Math.random() * 10);
     const hurufAcak = String.fromCharCode(65 + Math.floor(Math.random() * 26));
     const kodeUnik = cleanNama + angkaAcak + hurufAcak;
@@ -310,11 +311,10 @@ async function submitBefore() {
       temuan: temuanList
     };
 
-    // Kirim tanpa header Content-Type → hindari preflight CORS
+    // Kirim tanpa Content-Type → hindari preflight CORS
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
       body: JSON.stringify(payload)
-      // Tidak set headers → browser kirim sebagai text/plain
     });
 
     if (res.ok) {
@@ -352,7 +352,7 @@ async function submitAfter() {
     return;
   }
 
-  if (!fotoAfter || !fotoAfter.startsWith("image")) {
+  if (!fotoAfter || !fotoAfter.startsWith('data:image/')) {
     alert("Ambil foto perbaikan terlebih dahulu!");
     return;
   }
